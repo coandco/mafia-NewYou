@@ -4,10 +4,10 @@ notify "digitrev";
 import "zlib.ash";
 import "canadv.ash"
 
-skill sk;
-monster mon;
-int amount;
-location loc;
+skill _sk;
+monster _mon;
+int _amount;
+location _loc;
 
 location WhichLocation(location l){
 	if (l.to_string().contains_text("Frat")){
@@ -34,23 +34,23 @@ void readCorrespondence(){
 	//matcher m = create_matcher("Cast ([^,]+), once per fight, against a (.+) ([0-9]+) times \\(look in the (.+)\\)", mtext);
 	matcher m = create_matcher("Cast ([^,]+), once per fight, against (a|an|some|the)? (.+) ([0-9]+) times \\(look in (.+?)\\)", mtext);
 	while (m.find()) {
-		sk = m.group(1).to_skill();
+		_sk = m.group(1).to_skill();
 		matcher u00 = create_matcher("\\\\u00..", m.group(3));
 		if (u00.find())
-			mon = u00.replace_all("").to_monster();
+			_mon = u00.replace_all("").to_monster();
 		else 
-			mon = m.group(3).to_monster();
-		amount = m.group(4).to_int();
-		loc = m.group(5).replace_string("\\", "").to_location().WhichLocation(); //" This silly comment is only here to fix my poorly written syntax parser
+			_mon = m.group(3).to_monster();
+		_amount = m.group(4).to_int();
+		_loc = m.group(5).replace_string("\\", "").to_location().WhichLocation(); //" This silly comment is only here to fix my poorly written syntax parser
 	}
 }
 
 string NewYouCCS (int r, monster m, string t){
-	if (m != mon){
+	if (m != _mon){
 		return get_ccs_action(r);
 	}
 	else if (r == 0){
-		return "skill " + sk.to_string();
+		return "skill " + _sk.to_string();
 	}
 	else{
 		return get_ccs_action(r-1);
@@ -59,16 +59,16 @@ string NewYouCCS (int r, monster m, string t){
 
 void SharpenSaw() {
 	int MonstersFought = get_property("_NewYou.SawsSharpened").to_int();
-	while (MonstersFought < amount){
-		//adventure(1, loc, "NewYouCCS");
+	while (MonstersFought < _amount){
+		//adventure(1, _loc, "NewYouCCS");
 		string combatText;
 		cli_execute(get_property("betweenBattleScript"));
-		string page_text = loc.to_url().visit_url();
-		if (page_text.contains_text("Combat") && (last_monster() == mon || mon == $monster[none])) {
+		string page_text = _loc.to_url().visit_url();
+		if (page_text.contains_text("Combat") && (last_monster() == _mon || _mon == $monster[none])) {
 			if (have_skill($skill[Transcendent Olfaction]) && $effect[On the Trail].have_effect() <= 0) {
 				use_skill($skill[Transcendent Olfaction]);
 			}
-			combatText = use_skill(sk);
+			combatText = use_skill(_sk);
 		}
 		run_turn();
 //		string combatText = run_combat();
@@ -76,12 +76,12 @@ void SharpenSaw() {
 			matcher m = create_matcher("Looks like you've done ([0-9]+) out of [0-9]+!", combatText);
 			if (m.find()) {
 				MonstersFought = m.group(1).to_int();
-				print("Fought " + MonstersFought + " " + mon + " out of " + amount, "blue");
+				print("Fought " + MonstersFought + " " + _mon + " out of " + _amount, "blue");
 			} else {
 				MonstersFought += 1;
 			}
 		} else if (combatText.contains_text("Your saw is so sharp!")) {
-			MonstersFought = amount;
+			MonstersFought = _amount;
 		}
 		set_property("_NewYou.SawsSharpened", MonstersFought.to_string());
 	}
@@ -93,14 +93,14 @@ void NewYou(){
 	if (eudora() != "New-You Club")
 		abort("You should set your Eudora to the New-You Club before running this.");
 	readCorrespondence();
-	if (loc == $location[none] || amount == 0 || sk == $skill[none]){
+	if (_loc == $location[none] || _amount == 0 || _sk == $skill[none]){
 		abort("Parsing failed. Please message digitrev with the New You correspondence text, and he'll do what he can.");
 	}
-	if (mon != $monster[none]){
+	if (_mon != $monster[none]){
 		effect olf = $effect[On the Trail];
-		if (olf.have_effect() > 0 && get_property("olfactedMonster").to_monster() != mon)
+		if (olf.have_effect() > 0 && get_property("olfactedMonster").to_monster() != _mon)
 			cli_execute("uneffect On the Trail");
-		set_property("autoOlfact", "monster " + mon.to_string());
+		set_property("autoOlfact", "monster " + _mon.to_string());
 	}
 	SharpenSaw();
 	print("Your saw is so sharp!", "blue");
@@ -109,3 +109,4 @@ void NewYou(){
 void main(){
 	NewYou();
 }
+
