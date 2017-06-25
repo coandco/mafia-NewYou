@@ -32,7 +32,7 @@ void readCorrespondence(){
 
 	//Cast Dissonant Riff, once per fight, against a Wardröb nightstand 8 times (look in The Haunted Bedroom)
 	//matcher m = create_matcher("Cast ([^,]+), once per fight, against a (.+) ([0-9]+) times \\(look in the (.+)\\)", mtext);
-	matcher m = create_matcher("Cast ([^,]+), once per fight, against (a|an|some)? (.+) ([0-9]+) times \\(look in (.+?)\\)", mtext);
+	matcher m = create_matcher("Cast ([^,]+), once per fight, against (a|an|some|the)? (.+) ([0-9]+) times \\(look in (.+?)\\)", mtext);
 	while (m.find()) {
 		sk = m.group(1).to_skill();
 		matcher u00 = create_matcher("\\\\u00..", m.group(3));
