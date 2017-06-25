@@ -57,21 +57,32 @@ string NewYouCCS (int r, monster m, string t){
 	}
 }
 
-void SharpenSaw(){
+void SharpenSaw() {
 	int MonstersFought = get_property("_NewYou.SawsSharpened").to_int();
 	while (MonstersFought < amount){
 		//adventure(1, loc, "NewYouCCS");
 		string combatText;
 		cli_execute(get_property("betweenBattleScript"));
 		string page_text = loc.to_url().visit_url();
-		if (page_text.contains_text("Combat") && (last_monster() == mon || mon == $monster[none]))
+		if (page_text.contains_text("Combat") && (last_monster() == mon || mon == $monster[none])) {
+			if (have_skill($skill[Transcendent Olfaction]) && $effect[On the Trail].have_effect() <= 0) {
+				use_skill($skill[Transcendent Olfaction]);
+			}
 			combatText = use_skill(sk);
+		}
 		run_turn();
 //		string combatText = run_combat();
-		if (combatText.contains_text("You're really sharpening the old saw."))
-			MonstersFought += 1;
-		else if (combatText.contains_text("Your saw is so sharp!"))
+		if (combatText.contains_text("You're really sharpening the old saw.")) {
+			matcher m = create_matcher("Looks like you've done ([0-9]+) out of [0-9]+!", combatText);
+			if (m.find()) {
+				MonstersFought = m.group(1).to_int();
+				print("Fought " + MonstersFought + " " + mon + " out of " + amount, "blue");
+			} else {
+				MonstersFought += 1;
+			}
+		} else if (combatText.contains_text("Your saw is so sharp!")) {
 			MonstersFought = amount;
+		}
 		set_property("_NewYou.SawsSharpened", MonstersFought.to_string());
 	}
 }
