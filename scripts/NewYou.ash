@@ -45,22 +45,9 @@ void readCorrespondence(){
 	}
 }
 
-string NewYouCCS (int r, monster m, string t){
-	if (m != _mon){
-		return get_ccs_action(r);
-	}
-	else if (r == 0){
-		return "skill " + _sk.to_string();
-	}
-	else{
-		return get_ccs_action(r-1);
-	}
-}
-
 void SharpenSaw() {
 	int MonstersFought = get_property("_NewYou.SawsSharpened").to_int();
 	while (MonstersFought < _amount){
-		//adventure(1, _loc, "NewYouCCS");
 		string combatText;
 		cli_execute(get_property("betweenBattleScript"));
 		string page_text = _loc.to_url().visit_url();
