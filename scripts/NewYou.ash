@@ -79,7 +79,7 @@ void SharpenSaw() {
 	}
 }
 
-void NewYou(){
+void NewYou(int saw_max){
 	if (my_inebriety() > inebriety_limit())
 		abort("Sharpening your saw right now would be dangerous. You're too drunk to hold even a rusty saw right now.");
 	if (eudora() != "New-You Club")
@@ -90,6 +90,10 @@ void NewYou(){
 		print("No New-You quest, so there's nothing to do", "blue");
 		return;
 	}
+	if (saw_max > 0 && _amount_NewYou > saw_max) {
+		print("Quest would take too long (must fight " + _amount_NewYou + " " + _mon_NewYou + ", limit is " + saw_max + ")", "blue");
+		return;
+	}
 	if (_mon_NewYou != $monster[none]){
 		effect olf = $effect[On the Trail];
 		if (olf.have_effect() > 0 && get_property("olfactedMonster").to_monster() != _mon_NewYou)
@@ -97,6 +101,11 @@ void NewYou(){
 	}
 	SharpenSaw();
 	print("Your saw is so sharp!", "blue");
+}
+
+void NewYou() {
+	// If called without arguments, don't limit the maximum number of saws needed
+	NewYou(0);
 }
 
 void main(){
