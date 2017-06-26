@@ -1,13 +1,13 @@
-kscript "NewYou.ash"
+script "NewYou.ash";
 notify "digitrev";
 
 import "zlib.ash";
 import "canadv.ash";
 
-skill _sk;
-monster _mon;
-int _amount;
-location _loc;
+skill _sk_NewYou;
+monster _mon_NewYou;
+int _amount_NewYou;
+location _loc_NewYou;
 
 location WhichLocation(location l){
 	if (l.to_string().contains_text("Frat")){
@@ -31,22 +31,25 @@ void checkQuest() {
     string quest_text = visit_url("questlog.php?which=1");
 	matcher m = create_matcher("Looks like you've cast (.+?) during (\\d+) of the required (\\d+) encounters with  ?(?:a|an|some|the) (.+?)!", quest_text);
 	if (m.find()) {
-		_mon = fixedmon(m.group(4));
-		_sk = m.group(1).to_skill();
-		_amount = m.group(3).to_int();
-		if (_mon == $monster[none]) abort("Unable to identify monster '"+m.group(4)+"'");
-		set_property("_newYouMonster", _mon);
-		set_property("_newYouSkill", _sk);
+		_mon_NewYou = fixedmon(m.group(4));
+		_sk_NewYou = m.group(1).to_skill();
+		_amount_NewYou = m.group(3).to_int();
+		if (_mon_NewYou == $monster[none]) {
+			print("Unable to identify monster '"+m.group(4)+"'", "red");
+			return;
+		}
+		set_property("_newYouMonster", _mon_NewYou);
+		set_property("_newYouSkill", _sk_NewYou);
 		set_property("_newYouSharpeningsCast", m.group(2));
-		set_property("_newYouSharpeningsNeeded", _amount);
+		set_property("_newYouSharpeningsNeeded", _amount_NewYou);
 
 		foreach l in $locations[] {
 			float highest_rate = 0;
 			if (!l.nocombats) {
 				foreach mon,rate in appearance_rates(l) {
-					if (mon == _mon && can_adv(l) && rate > highest_rate) {
+					if (mon == _mon_NewYou && can_adv(l) && rate > highest_rate) {
 					    highest_rate = rate;
-						_loc = l;
+						_loc_NewYou = l;
 						set_property("_newYouLocation", l.to_string());
 						print("Found in "+l+" with an appearance rate of "+rate);
 					}
@@ -64,15 +67,15 @@ void checkQuest() {
 void SharpenSaw() {
 	// BatBrain now olfacts, uses the correct skill, and keeps track of sharpenings automatically
 	while (get_property("_newYouSharpeningsCast").to_int() < get_property("_newYouSharpeningsNeeded").to_int()) {
-		boolean success = adventure(1,_loc);
+		boolean success = adventure(1,_loc_NewYou);
 
-		string msg = "New You progress: cast " + _sk + " " + get_property("_newYouSharpeningsCast") + " of ";
-		msg = msg + get_property("_newYouSharpeningsNeeded") + " times against " + _mon + " at " + _loc;
+		string msg = "New You progress: cast " + _sk_NewYou + " " + get_property("_newYouSharpeningsCast") + " of ";
+		msg = msg + get_property("_newYouSharpeningsNeeded") + " times against " + _mon_NewYou + " at " + _loc_NewYou;
 		print(msg, "blue");
 
 		// A location can become unavailable mid-adventure (if, for example, your location is McMillicancuddy's Farm)
 		if (!success)
-			abort("Could not adventure at " + _loc);
+			abort("Could not adventure at " + _loc_NewYou);
 	}
 }
 
@@ -82,14 +85,14 @@ void NewYou(){
 	if (eudora() != "New-You Club")
 		abort("You should set your Eudora to the New-You Club before running this.");
 	checkQuest();
-	if (_loc == $location[none] || _amount == 0 || _sk == $skill[none]){
+	if (_loc_NewYou == $location[none] || _amount_NewYou == 0 || _sk_NewYou == $skill[none]){
 		// This doesn't need to abort and kill upstream scripts if you don't have the quest in your log
 		print("No New-You quest, so there's nothing to do", "blue");
 		return;
 	}
-	if (_mon != $monster[none]){
+	if (_mon_NewYou != $monster[none]){
 		effect olf = $effect[On the Trail];
-		if (olf.have_effect() > 0 && get_property("olfactedMonster").to_monster() != _mon)
+		if (olf.have_effect() > 0 && get_property("olfactedMonster").to_monster() != _mon_NewYou)
 			cli_execute("uneffect On the Trail");
 	}
 	SharpenSaw();
