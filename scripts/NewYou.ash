@@ -67,19 +67,45 @@ void checkQuest() {
 void SharpenSaw() {
 	// BatBrain now olfacts, uses the correct skill, and keeps track of sharpenings automatically
 	while (get_property("_newYouSharpeningsCast").to_int() < get_property("_newYouSharpeningsNeeded").to_int()) {
-		boolean success = adventure(1,_loc_NewYou);
+		if (get_property("_newYouUseBatBrain").to_boolean()) {
+			boolean success = adventure(1,_loc_NewYou);
+
+			// A location can become unavailable mid-adventure (if, for example, your location is McMillicancuddy's Farm)
+			if (!success)
+				abort("Could not adventure at " + _loc_NewYou);
+		} else {
+			string combatText;
+			int MonstersFought = get_property("_newYouSharpeningsCast").to_int();
+			cli_execute(get_property("betweenBattleScript"));
+			string page_text = _loc_NewYou.to_url().visit_url();
+			if (page_text.contains_text("Combat") && (last_monster() == _mon_NewYou || _mon_NewYou == $monster[none])) {
+				if (have_skill($skill[Transcendent Olfaction]) && $effect[On the Trail].have_effect() <= 0) {
+					use_skill($skill[Transcendent Olfaction]);
+				}
+				combatText = use_skill(_sk_NewYou);
+			}
+			run_turn();
+			if (combatText.contains_text("You're really sharpening the old saw.")) {
+					matcher m = create_matcher("Looks like you've done ([0-9]+) out of [0-9]+!", combatText);
+					if (m.find()) {
+							MonstersFought = m.group(1).to_int();
+					} else {
+							MonstersFought += 1;
+					}
+			} else if (combatText.contains_text("Your saw is so sharp!")) {
+					MonstersFought = _amount_NewYou;
+			}
+			set_property("_newYouSharpeningsCast", MonstersFought.to_string());
+		}
 
 		string msg = "New You progress: cast " + _sk_NewYou + " " + get_property("_newYouSharpeningsCast") + " of ";
 		msg = msg + get_property("_newYouSharpeningsNeeded") + " times against " + _mon_NewYou + " at " + _loc_NewYou;
 		print(msg, "blue");
-
-		// A location can become unavailable mid-adventure (if, for example, your location is McMillicancuddy's Farm)
-		if (!success)
-			abort("Could not adventure at " + _loc_NewYou);
 	}
 }
 
-void NewYou(int saw_max){
+void NewYou(int saw_max, boolean useBatBrain){
+	set_property("_newYouUseBatBrain", useBatBrain);
 	if (my_inebriety() > inebriety_limit())
 		abort("Sharpening your saw right now would be dangerous. You're too drunk to hold even a rusty saw right now.");
 	if (eudora() != "New-You Club")
@@ -103,11 +129,12 @@ void NewYou(int saw_max){
 	print("Your saw is so sharp!", "blue");
 }
 
-void NewYou() {
+void NewYou(boolean useBatBrain) {
 	// If called without arguments, don't limit the maximum number of saws needed
-	NewYou(0);
+	NewYou(0, useBatBrain);
 }
 
-void main(){
-	NewYou();
+void main(boolean useBatBrain){
+	NewYou(useBatBrain);
 }
+
