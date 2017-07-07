@@ -10,7 +10,13 @@ int _amount_NewYou;
 location _loc_NewYou;
 
 location WhichLocation(location l){
-	if (l.to_string().contains_text("Frat")){
+	if (l.to_string() == "The Icy Peak") {
+		if (numeric_modifier("cold resistance") < 5.0) {
+		    print("Not enough cold resistance to adventure in The Icy Peak", "red");
+			return $location[none];
+		}
+	}
+	if (l.to_string().contains_text("Frat")) {
 		foreach f in $locations[Wartime Frat House,Frat House,The Orcish Frat House (Bombed Back to the Stone Age)]{
 			if (can_adv(f))
 				return f;
@@ -23,6 +29,7 @@ monster fixedmon(string monstr) {
 	if (to_monster(monstr) != $monster[none]) return to_monster(monstr);
 	switch (monstr) {
 		case "Orcish Frat Boy": return $monster[orcish frat boy (music lover)];
+		case "Ninja Snowman": return $monster[ninja snowman (chopsticks)];
 	}
 	return $monster[none];
 }
@@ -114,6 +121,10 @@ void NewYou(int saw_max, boolean useBatBrain){
 	if (_loc_NewYou == $location[none] || _amount_NewYou == 0 || _sk_NewYou == $skill[none]){
 		// This doesn't need to abort and kill upstream scripts if you don't have the quest in your log
 		print("No New-You quest, so there's nothing to do", "blue");
+		return;
+	}
+	if (_mon_NewYou == $monster[none]) {
+		print("The requested monster has multiple variants, and this script doesn't account for them yet.  Please message CrankyOne with today's quest text and he'll see what he can do.", "blue");
 		return;
 	}
 	if (saw_max > 0 && _amount_NewYou > saw_max) {
